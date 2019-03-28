@@ -12,16 +12,13 @@ all : hello-c.efi hello-fasm.efi memmap.efi
 
 hello-fasm.efi : hello-fasm.obj
 	$(ld) $(lflags) -entry:efi_main $< -out:$@
-	cp $@ $(boot)/
 
 hello-c.efi : hello-c.obj
 	$(ld) $(lflags) -entry:efi_main $< -out:$@
-	cp $@ $(boot)/
 
 memmap.efi : memmap.obj
 	$(ld) $(lflags) -entry:efi_main $< -out:$@
 	cp hello-c.efi $(boot)/
-	cp $@ $(boot)/
 
 hello-fasm.obj : hello-fasm.asm
 	fasm $<
@@ -38,12 +35,18 @@ OVMF_CODE.fd:
 OVMF_VARS.fd:
 	cp $(original_ovmf_vars) $@
 
+deploy : hello-c.efi hello-fasm.efi memmap.efi
+	mkdir -p image/EFI/BOOT
+	cp hello-c.efi $(boot)/
+	cp hello-fasm.efi $(boot)/
+	cp memmap.efi $(boot)/
+
 # See https://osdev-jp.readthedocs.io/ja/latest/2017/create-uefi-app-with-edk2.html
 # 1. `make run`
 # 2. Press F2 repeatedly and show boot menu
 # 3. Select EFI Internal Shell
 # 4. fs0: ... (same as REAME)
-run: all OVMF_CODE.fd OVMF_VARS.fd
+run: deploy OVMF_CODE.fd OVMF_VARS.fd
 	qemu-system-x86_64 \
 		-drive if=pflash,format=raw,readonly,file=OVMF_CODE.fd \
 		-drive if=pflash,format=raw,file=OVMF_VARS.fd \
