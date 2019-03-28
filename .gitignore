@@ -1,0 +1,6 @@
+*.fd
+*.efi
+*.obj
+*.exe
+*.dll
+*.lib
